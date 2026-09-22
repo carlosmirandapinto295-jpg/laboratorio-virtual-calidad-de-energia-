@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔌 Laboratorio Virtual de Calidad de Energía</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0b1120 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  
+  header {
+    text-align: center;
+    padding: 24px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #334155;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  header h1 { font-size: 2rem; color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+  header p { color: #94a3b8; margin-top: 8px; font-size: 1rem; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .panel h2 {
+    color: #38bdf8;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .event-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .event-btn {
+    background: #1e293b;
+    border: 2px solid #334155;
+    color: #cbd5e1;
+    padding: 12px 6px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+  }
+  .event-btn:hover { border-color: #38bdf8; transform: translateY(-2px); background: #253349; }
+  .event-btn.active {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    border-color: #38bdf8;
+    color: white;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+  }
+
+  .control-group { margin-bottom: 16px; }
+  .control-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+  .control-label .value { color: #38bdf8; font-weight: 700; font-family: 'Courier New', monospace; font-size: 0.95rem; }
+
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #334155;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #38bdf8;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e293b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #334155;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #475569;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .toggle-switch.active { background: #38bdf8; }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+  .toggle-switch.active::after { transform: translateX(20px); }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  .status-ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
+  .status-warn { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid #facc15; }
+  .status-bad { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .metric {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .metric:hover { transform: translateY(-2px); border-color: #475569; }
+  .metric-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric-value { font-size: 1.2rem; font-weight: 700; color: #38bdf8; margin-top: 4px; font-family: 'Courier New', monospace; }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    background: #0f172a;
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #94a3b8;
+  }
+  .tab:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+  .tab.active { background: #38bdf8; color: #0f172a; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3); }
+
+  canvas {
+    width: 100%;
+    height: 340px;
+    background: #0b1120;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    font-size: 0.8rem;
+    justify-content: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; color: #cbd5e1; }
+  .legend-color { width: 16px; height: 16px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+  .visual-guide {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    animation: fadeIn 0.4s ease;
+  }
+  @media (max-width: 1100px) { .visual-guide { grid-template-columns: 1fr; } }
+  
+  .guide-image-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    height: 340px;
+    background: #0f172a;
+  }
+  .guide-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
+  .guide-image-container:hover .guide-image { transform: scale(1.05); }
+  .guide-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(11, 17, 32, 0.95), transparent);
+    padding: 20px;
+    color: white;
+  }
+  .guide-overlay h3 { color: #38bdf8; margin-bottom: 4px; font-size: 1.1rem; }
+  
+  .guide-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .info-card {
+    background: rgba(14, 165, 233, 0.08);
+    border-left: 4px solid #38bdf8;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    flex-grow: 1;
+  }
+  .info-card strong { color: #38bdf8; }
+  
+  .phasor-container {
+    background: #0f172a;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .phasor-label {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .cause-effect {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .ce-box {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+  }
+  .ce-box h4 { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
+  .ce-box ul { font-size: 0.85rem; color: #cbd5e1; padding-left: 16px; margin: 0; }
+  .ce-box li { margin-bottom: 4px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔌 Laboratorio Virtual de Calidad de Energía</h1>
+    <p>Explora tensiones, corrientes, armónicos y eventos con visualización fasorial en tiempo real</p>
+  </header>
+
+  <div class="layout">
+    <!-- PANEL DE CONTROL -->
+    <div class="panel">
+      <h2>⚡ Evento a simular</h2>
+      <div class="event-selector">
+        <button class="event-btn active" data-event="normal">✅ Normal</button>
+        <button class="event-btn" data-event="sag">📉 Hueco</button>
+        <button class="event-btn" data-event="swell">📈 Subida</button>
+        <button class="event-btn" data-event="interrupt">⛔ Interrup.</button>
+        <button class="event-btn" data-event="harmonic">🌊 Armónicos</button>
+        <button class="event-btn" data-event="flicker">💡 Flicker</button>
+      </div>
+
+      <h2>🎛️ Parámetros de la señal</h2>
+      <div class="control-group">
+        <div class="control-label"><span>Tensión (Vrms)</span><span class="value" id="vVal">230 V</span></div>
+        <input type="range" id="voltage" min="0" max="300" value="230" step="1">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Frecuencia (Hz)</span><span class="value" id="fVal">50.0 Hz</span></div>
+        <input type="range" id="frequency" min="45" max="55" value="50" step="0.1">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Corriente (Arms)</span><span class="value" id="iVal">10.0 A</span></div>
+        <input type="range" id="current" min="0" max="50" value="10" step="0.5">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Factor de potencia (cos φ)</span><span class="value" id="pfVal">0.95</span></div>
+        <input type="range" id="pf" min="0.1" max="1" value="0.95" step="0.01">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>THD - Distorsión (%)</span><span class="value" id="thdVal">2.0 %</span></div>
+        <input type="range" id="thd" min="0" max="30" value="2" step="0.5">
+      </div>
+
+      <div class="toggle-container">
+        <span style="font-size: 0.9rem; font-weight: 600; color: #cbd5e1;">Mostrar onda de Corriente</span>
+        <div class="toggle-switch active" id="showCurrentToggle"></div>
+      </div>
+
+      <div class="status-bar status-ok" id="statusBar">✅ Señal dentro de límites normativos</div>
+
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Potencia Activa (P)</div><div class="metric-value" id="pAct">2.19 kW</div></div>
+        <div class="metric"><div class="metric-label">Potencia Reactiva (Q)</div><div class="metric-value" id="pRea">0.72 kVAr</div></div>
+        <div class="metric"><div class="metric-label">Potencia Aparente (S)</div><div class="metric-value" id="pApp">2.30 kVA</div></div>
+        <div class="metric"><div class="metric-label">Desviación Frec.</div><div class="metric-value" id="fDev">0.0 %</div></div>
+      </div>
+    </div>
+
+    <!-- PANEL DE VISUALIZACIÓN -->
+    <div class="panel">
+      <h2>📈 Visualización y Análisis</h2>
+      <div class="tabs">
+        <div class="tab active" data-view="wave">🔌 Forma de Onda</div>
+        <div class="tab" data-view="spectrum">📊 Espectro</div>
+        <div class="tab" data-view="visual">📚 Guía y Fasores</div>
+      </div>
+      
+      <div id="waveView">
+        <canvas id="canvas"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-color" style="background:#38bdf8"></div>Tensión (V)</div>
+          <div class="legend-item"><div class="legend-color" style="background:#f97316"></div>Corriente (I)</div>
+          <div class="legend-item"><div class="legend-color" style="background:rgba(34, 197, 94, 0.4)"></div>Zona ideal</div>
+          <div class="legend-item"><div class="legend-color" style="background:rgba(239, 68, 68, 0.3)"></div>Límite normativo</div>
+        </div>
+      </div>
+
+      <div id="spectrumView" style="display: none;">
+        <canvas id="spectrumCanvas"></canvas>
+      </div>
+
+      <div id="visualView" style="display: none;">
+        <div class="visual-guide">
+          <div class="guide-image-container">
+            <img id="guideImage" src="" alt="Guía visual" class="guide-image">
+            <div class="guide-overlay">
+              <h3 id="guideTitle">Modo Normal</h3>
+              <p id="guideSubtitle" style="font-size: 0.85rem; opacity: 0.9;">Condiciones ideales de la red eléctrica</p>
+            </div>
+          </div>
+          <div class="guide-info">
+            <div class="info-card" id="infoCard">
+              <strong>📘 Modo Normal:</strong> Señal sinusoidal pura. Parámetros dentro de los límites establecidos por la norma <strong>EN 50160</strong>.
+            </div>
+            <div class="cause-effect">
+              <div class="ce-box">
+                <h4>⚠️ Causas Típicas</h4>
+                <ul id="causeList"><li>Operación normal de la red</li></ul>
+              </div>
+              <div class="ce-box">
+                <h4>🔧 Efectos en Equipos</h4>
+                <ul id="effectList"><li>Funcionamiento óptimo</li></ul>
+              </div>
+            </div>
+            <div class="phasor-container">
+              <div class="phasor-label">Diagrama Fasorial (Tiempo Real)</div>
+              <canvas id="phasorCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const spectrumCanvas = document.getElementById('spectrumCanvas');
+const sCtx = spectrumCanvas.getContext('2d');
+const phasorCanvas = document.getElementById('phasorCanvas');
+const pCtx = phasorCanvas.getContext('2d');
+
+// Estado de la app
+const state = {
+  event: 'normal',
+  view: 'wave',
+  voltage: 230,
+  frequency: 50,
+  current: 10,
+  pf: 0.95,
+  thd: 2,
+  time: 0,
+  showCurrent: true
+};
+
+// Límites normativos y educativos
+const NORM = { vMin: 207, vMax: 253, fMin: 49.5, fMax: 50.5, thdMax: 8, pfMin: 0.9 };
+const EDU = { vMin: 218.5, vMax: 241.5, fMin: 49.75, fMax: 50.25, thdMax: 5, pfMin: 0.95 };
+
+// Datos enriquecidos para la Guía Visual - IMÁGENES ACTUALIZADAS Y FUNCIONALES
+const eventData = {
+  normal: {
+    title: "Condición Normal",
+    subtitle: "Suministro eléctrico dentro de parámetros ideales",
+    image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80",
+    info: "<strong>📘 Modo Normal:</strong> Señal sinusoidal pura. Parámetros dentro de los límites establecidos por la norma <strong>EN 50160</strong> (tensión ±10%, frecuencia 50Hz ±1%, THD &lt; 8%).",
+    causes: ["Operación estable de la red de distribución", "Cargas balanceadas y lineales"],
+    effects: ["Vida útil nominal de los equipos", "Eficiencia energética máxima", "Sin calentamiento adicional en motores"]
+  },
+  sag: {
+    title: "Hueco de Tensión (Sag)",
+    subtitle: "Reducción breve de la tensión entre 10% y 90% del valor nominal",
+    image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=800&q=80",
+    info: "<strong>📉 Hueco de tensión:</strong> Reducción breve de la tensión. La norma <strong>EN 50160</strong> reporta miles de eventos/año. El umbral educativo alerta al 95% de Un.",
+    causes: ["Arranque de motores de gran potencia", "Faltas o cortocircuitos en la red", "Conexión de cargas pesadas repentinas"],
+    effects: ["Parada de contactores y variadores de frecuencia", "Reinicio de equipos informáticos sensibles", "Parpadeo de iluminación"]
+  },
+  swell: {
+    title: "Subida de Tensión (Swell)",
+    subtitle: "Incremento breve por encima del 110% del valor nominal",
+    image: "https://images.unsplash.com/photo-1548336137-9ada2e7e41b4?auto=format&fit=crop&w=800&q=80",
+    info: "<strong>📈 Subida de tensión:</strong> Incremento breve por encima del 110% de Un. Puede dañar equipos sensibles y reducir la vida útil de aislamientos.",
+    causes: ["Desconexión repentina de cargas grandes", "Falta a tierra en otra fase del sistema", "Maniobras de bancos de condensadores"],
+    effects: ["Saturación de núcleos magnéticos en transformadores", "Envejecimiento prematuro de aislamientos", "Daño en fuentes de alimentación"]
+  },
+  interrupt: {
+    title: "Interrupción",
+    subtitle: "Tensión inferior al 1% del valor nominal",
+    image: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=800&q=80",
+    info: "<strong> Interrupción:</strong> Tensión &lt; 1% del valor nominal. Clasificada como breve (&lt;3 min) o larga. La norma EN 50160 permite un número limitado al año.",
+    causes: ["Maniobras de conmutación en la red", "Fallas permanentes en líneas de distribución", "Activación de protecciones (fusibles, disyuntores)"],
+    effects: ["Pérdida total de producción en procesos industriales", "Pérdida de datos en sistemas no protegidos", "Necesidad de reinicio manual de procesos"]
+  },
+  harmonic: {
+    title: "Distorsión Armónica",
+    subtitle: "Presencia de frecuencias múltiplos de la fundamental (50Hz)",
+    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+    info: "<strong>🌊 Armónicos:</strong> Distorsión de la onda. <strong>IEEE 519</strong> limita THD de tensión al 5% (educativo) y 8% (normativo). Causa principal: cargas no lineales.",
+    causes: ["Variadores de frecuencia (VFD)", "Iluminación LED y fluorescentes", "Rectificadores y fuentes conmutadas", "Hornos de arco eléctrico"],
+    effects: ["Sobrecalentamiento de neutros y transformadores", "Disparo intempestivo de interruptores", "Resonancia en bancos de condensadores"]
+  },
+  flicker: {
+    title: "Flicker (Parpadeo)",
+    subtitle: "Variaciones cíclicas de la tensión que causan molestia visual",
+    image: "https://images.unsplash.com/photo-1565514020125-998877c44e8e?auto=format&fit=crop&w=800&q=80",
+    info: "<strong>💡 Flicker:</strong> Variaciones cíclicas de la tensión. Se mide con Pst (corto plazo) y Plt (largo plazo). IEC 61000-3-3: Pst ≤ 1.",
+    causes: ["Soldadoras de arco eléctrico", "Hornos de arco en acerías", "Arranques frecuentes de motores grandes", "Molinos de viento (ráfagas)"],
+    effects: ["Fatiga visual y molestia a personas", "Parpadeo perceptible en iluminación incandescente", "Inestabilidad en equipos de medición sensible"]
+  }
+};
+
+// Redimensionar canvas (CORREGIDO para soportar display: none)
+function resizeCanvas() {
+  [canvas, spectrumCanvas].forEach(c => {
+    const rect = c.getBoundingClientRect();
+    // Si está oculto (display: none), rect.width es 0. Usamos el padre o un valor por defecto.
+    const w = rect.width > 0 ? rect.width : (c.parentElement ? c.parentElement.clientWidth : 800);
+    const h = rect.height > 0 ? rect.height : 340;
+    
+    c.width = w * window.devicePixelRatio;
+    c.height = h * window.devicePixelRatio;
+    c.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+  });
+  
+  // Phasor canvas es tamaño fijo pero escalado para retina
+  phasorCanvas.width = 200 * window.devicePixelRatio;
+  phasorCanvas.height = 200 * window.devicePixelRatio;
+  pCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+window.addEventListener('resize', resizeCanvas);
+
+// Actualizar métricas
+function updateMetrics() {
+  const V = state.voltage;
+  const I = state.current;
+  const pf = state.pf;
+  const P = V * I * pf / 1000;
+  const S = V * I / 1000;
+  const Q = Math.sqrt(Math.max(0, S*S - P*P));
+  const fDev = ((state.frequency - 50) / 50) * 100;
+
+  document.getElementById('pAct').textContent = P.toFixed(2) + ' kW';
+  document.getElementById('pRea').textContent = Q.toFixed(2) + ' kVAr';
+  document.getElementById('pApp').textContent = S.toFixed(2) + ' kVA';
+  document.getElementById('fDev').textContent = fDev.toFixed(2) + ' %';
+}
+
+// Evaluar estado
+function evaluateStatus() {
+  const bar = document.getElementById('statusBar');
+  const V = state.voltage, F = state.frequency, T = state.thd, PF = state.pf;
+
+  if (V < NORM.vMin || V > NORM.vMax || F < NORM.fMin || F > NORM.fMax || T > NORM.thdMax || PF < NORM.pfMin) {
+    bar.className = 'status-bar status-bad';
+    bar.innerHTML = '⛔ Fuera de límites normativos — Riesgo para equipos';
+  } else if (V < EDU.vMin || V > EDU.vMax || F < EDU.fMin || F > EDU.fMax || T > EDU.thdMax || PF < EDU.pfMin) {
+    bar.className = 'status-bar status-warn';
+    bar.innerHTML = '⚠️ Fuera de umbral educativo — Revisar parámetros';
+  } else {
+    bar.className = 'status-bar status-ok';
+    bar.innerHTML = '✅ Señal dentro de límites normativos y educativos';
+  }
+}
+
+// Dibujar forma de onda
+function drawWave() {
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  ctx.clearRect(0, 0, w, h);
+
+  const cy = h / 2;
+  const amp = h * 0.35;
+  const vNom = 230;
+
+  // Zonas de tolerancia
+  const normH = amp * (NORM.vMax / vNom);
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.05)';
+  ctx.fillRect(0, cy - normH - 10, w, 2 * normH + 20);
+
+  const eduH = amp * (EDU.vMax / vNom);
+  ctx.fillStyle = 'rgba(250, 204, 21, 0.08)';
+  ctx.fillRect(0, cy - eduH, w, 2 * eduH);
+
+  const idealH = amp * 0.95;
+  ctx.fillStyle = 'rgba(34, 197, 94, 0.1)';
+  ctx.fillRect(0, cy - idealH, w, 2 * idealH);
+
+  // Cuadrícula y ejes
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+  ctx.moveTo(0, cy - normH); ctx.lineTo(w, cy - normH);
+  ctx.moveTo(0, cy + normH); ctx.lineTo(w, cy + normH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const signalAmp = amp * (state.voltage / vNom);
+  const freq = state.frequency;
+  const phaseShift = Math.acos(Math.min(1, Math.max(-1, state.pf)));
+
+  // Dibujar Corriente
+  if (state.showCurrent) {
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#f97316';
+    ctx.shadowColor = '#f97316';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    const iAmp = (amp * 0.8) * (state.current / 50);
+
+    for (let x = 0; x < w; x++) {
+      const t = x / w * 4 * Math.PI + state.time;
+      let iFundamental = Math.sin(t * (freq / 50) - phaseShift);
+      
+      if (state.event === 'sag') iFundamental *= 0.6;
+      else if (state.event === 'swell') iFundamental *= 1.25;
+      else if (state.event === 'interrupt') iFundamental *= 0.02;
+      else if (state.event === 'flicker') iFundamental *= (1 + 0.15 * Math.sin(t * 0.3));
+
+      const y = cy - (iFundamental * iAmp);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Dibujar Tensión
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#38bdf8';
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+
+  for (let x = 0; x < w; x++) {
+    const t = x / w * 4 * Math.PI + state.time;
+    let fundamental = Math.sin(t * (freq / 50));
+
+    if (state.event === 'sag') fundamental *= 0.6;
+    else if (state.event === 'swell') fundamental *= 1.25;
+    else if (state.event === 'interrupt') fundamental *= 0.02;
+    else if (state.event === 'flicker') fundamental *= (1 + 0.15 * Math.sin(t * 0.3));
+
+    let y = fundamental * signalAmp;
+
+    if (state.thd > 0 && (state.event === 'harmonic' || state.event === 'normal')) {
+      const thdFactor = state.thd / 100;
+      y += Math.sin(3 * t * (freq / 50)) * signalAmp * thdFactor * 0.6;
+      y += Math.sin(5 * t * (freq / 50)) * signalAmp * thdFactor * 0.4;
+      y += Math.sin(7 * t * (freq / 50)) * signalAmp * thdFactor * 0.25;
+    }
+
+    if (x === 0) ctx.moveTo(x, cy - y);
+    else ctx.lineTo(x, cy - y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Etiquetas
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px monospace';
+  ctx.fillText('+' + NORM.vMax + 'V', 6, cy - normH - 6);
+  ctx.fillText('-' + NORM.vMax + 'V', 6, cy + normH + 14);
+}
+
+// Dibujar Espectro
+function drawSpectrum() {
+  const w = spectrumCanvas.width / window.devicePixelRatio;
+  const h = spectrumCanvas.height / window.devicePixelRatio;
+  sCtx.clearRect(0, 0, w, h);
+
+  const harmonics = [1, 3, 5, 7, 9, 11, 13];
+  const barW = w / (harmonics.length * 2.5);
+  const baseY = h - 40;
+  const maxH = h - 80;
+
+  const normLine = baseY - maxH * (NORM.thdMax / 30);
+  const eduLine = baseY - maxH * (EDU.thdMax / 30);
+
+  sCtx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+  sCtx.setLineDash([5, 5]);
+  sCtx.beginPath(); sCtx.moveTo(0, normLine); sCtx.lineTo(w, normLine); sCtx.stroke();
+  sCtx.strokeStyle = 'rgba(250, 204, 21, 0.6)';
+  sCtx.beginPath(); sCtx.moveTo(0, eduLine); sCtx.lineTo(w, eduLine); sCtx.stroke();
+  sCtx.setLineDash([]);
+
+  sCtx.fillStyle = '#f87171'; sCtx.font = '11px monospace';
+  sCtx.fillText('Límite normativo THD ' + NORM.thdMax + '%', 10, normLine - 5);
+  sCtx.fillStyle = '#facc15';
+  sCtx.fillText('Umbral educativo THD ' + EDU.thdMax + '%', 10, eduLine - 5);
+
+  harmonics.forEach((n, i) => {
+    let magnitude = 0;
+    if (n === 1) magnitude = 100;
+    else magnitude = (state.thd / 100) * 100 / (n * 0.8);
+
+    // Si no es modo armónico o normal, los armónicos superiores son 0 (físicamente correcto para esta simulación básica)
+    if (state.event !== 'harmonic' && state.event !== 'normal') magnitude = 0;
+
+    const barH = (magnitude / 100) * maxH * 0.8;
+    const x = 40 + i * (barW * 2.5);
+
+    const gradient = sCtx.createLinearGradient(0, baseY - barH, 0, baseY);
+    if (magnitude > NORM.thdMax * 2 && n > 1) {
+      gradient.addColorStop(0, '#ef4444'); gradient.addColorStop(1, '#991b1b');
+    } else if (magnitude > EDU.thdMax * 2 && n > 1) {
+      gradient.addColorStop(0, '#facc15'); gradient.addColorStop(1, '#854d0e');
+    } else {
+      gradient.addColorStop(0, '#38bdf8'); gradient.addColorStop(1, '#0369a1');
+    }
+    sCtx.fillStyle = gradient;
+    sCtx.fillRect(x, baseY - barH, barW, barH);
+
+    sCtx.fillStyle = '#cbd5e1'; sCtx.font = '11px monospace'; sCtx.textAlign = 'center';
+    sCtx.fillText(n + 'ª', x + barW / 2, baseY + 15);
+    sCtx.fillText(magnitude.toFixed(1) + '%', x + barW / 2, baseY - barH - 5);
+  });
+  sCtx.textAlign = 'left';
+  sCtx.fillStyle = '#94a3b8';
+  sCtx.font = '12px sans-serif';
+  sCtx.fillText('Espectro de armónicos (magnitud relativa %)', 40, 25);
+}
+
+// Dibujar Diagrama Fasorial Animado
+function drawPhasor() {
+  const w = 200;
+  const h = 200;
+  const cx = w / 2;
+  const cy = h / 2;
+  pCtx.clearRect(0, 0, w, h);
+
+  pCtx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+  pCtx.lineWidth = 1;
+  pCtx.beginPath();
+  pCtx.arc(cx, cy, 80, 0, Math.PI * 2);
+  pCtx.stroke();
+
+  pCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+  pCtx.beginPath(); pCtx.moveTo(cx, 10); pCtx.lineTo(cx, 190); pCtx.stroke();
+  pCtx.beginPath(); pCtx.moveTo(10, cy); pCtx.lineTo(190, cy); pCtx.stroke();
+
+  const phaseShift = Math.acos(Math.min(1, Math.max(-1, state.pf)));
+  const rotation = (state.time * 2) % (Math.PI * 2);
+
+  // Vector Tensión (Azul)
+  const vLen = 70;
+  const vx = cx + vLen * Math.cos(rotation);
+  const vy = cy - vLen * Math.sin(rotation);
+  
+  pCtx.strokeStyle = '#38bdf8';
+  pCtx.lineWidth = 3;
+  pCtx.shadowColor = '#38bdf8';
+  pCtx.shadowBlur = 8;
+  pCtx.beginPath(); pCtx.moveTo(cx, cy); pCtx.lineTo(vx, vy); pCtx.stroke();
+  
+  pCtx.fillStyle = '#38bdf8';
+  pCtx.beginPath(); pCtx.arc(vx, vy, 4, 0, Math.PI*2); pCtx.fill();
+  pCtx.shadowBlur = 0;
+
+  // Vector Corriente (Naranja)
+  const iLen = 50;
+  const ix = cx + iLen * Math.cos(rotation - phaseShift);
+  const iy = cy - iLen * Math.sin(rotation - phaseShift);
+
+  pCtx.strokeStyle = '#f97316';
+  pCtx.lineWidth = 3;
+  pCtx.shadowColor = '#f97316';
+  pCtx.shadowBlur = 8;
+  pCtx.beginPath(); pCtx.moveTo(cx, cy); pCtx.lineTo(ix, iy); pCtx.stroke();
+  
+  pCtx.fillStyle = '#f97316';
+  pCtx.beginPath(); pCtx.arc(ix, iy, 4, 0, Math.PI*2); pCtx.fill();
+  pCtx.shadowBlur = 0;
+
+  // Arco de ángulo
+  pCtx.strokeStyle = '#facc15';
+  pCtx.lineWidth = 2;
+  pCtx.beginPath();
+  pCtx.arc(cx, cy, 25, rotation - phaseShift, rotation, phaseShift > 0);
+  pCtx.stroke();
+
+  pCtx.fillStyle = '#facc15';
+  pCtx.font = 'bold 12px sans-serif';
+  pCtx.textAlign = 'center';
+  const angleDeg = (phaseShift * 180 / Math.PI).toFixed(1);
+  pCtx.fillText(`φ = ${angleDeg}°`, cx + 35, cy - 10);
+  
+  pCtx.font = '11px sans-serif';
+  pCtx.fillStyle = '#38bdf8';
+  pCtx.fillText('V', vx + 10, vy);
+  pCtx.fillStyle = '#f97316';
+  pCtx.fillText('I', ix + 10, iy);
+}
+
+// Loop de animación
+function animate() {
+  state.time += 0.04;
+  if (state.view === 'wave') drawWave();
+  else if (state.view === 'spectrum') drawSpectrum();
+  else if (state.view === 'visual') drawPhasor();
+  requestAnimationFrame(animate);
+}
+
+// Actualizar Guía Visual
+function updateVisualGuide() {
+  const data = eventData[state.event];
+  document.getElementById('guideImage').src = data.image;
+  document.getElementById('guideTitle').textContent = data.title;
+  document.getElementById('guideSubtitle').textContent = data.subtitle;
+  document.getElementById('infoCard').innerHTML = data.info;
+  
+  const causeList = document.getElementById('causeList');
+  causeList.innerHTML = data.causes.map(c => `<li>${c}</li>`).join('');
+  
+  const effectList = document.getElementById('effectList');
+  effectList.innerHTML = data.effects.map(e => `<li>${e}</li>`).join('');
+}
+
+// Event listeners
+document.querySelectorAll('.event-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.event-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.event = btn.dataset.event;
+    updateVisualGuide();
+
+    if (state.event === 'sag') { document.getElementById('voltage').value = 180; state.voltage = 180; }
+    else if (state.event === 'swell') { document.getElementById('voltage').value = 265; state.voltage = 265; }
+    else if (state.event === 'interrupt') { document.getElementById('voltage').value = 5; state.voltage = 5; }
+    else if (state.event === 'harmonic') { document.getElementById('thd').value = 12; state.thd = 12; }
+    else { document.getElementById('voltage').value = 230; state.voltage = 230; document.getElementById('thd').value = 2; state.thd = 2; }
+    updateAll();
+  });
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.view = tab.dataset.view;
+    
+    document.getElementById('waveView').style.display = state.view === 'wave' ? 'block' : 'none';
+    document.getElementById('spectrumView').style.display = state.view === 'spectrum' ? 'block' : 'none';
+    document.getElementById('visualView').style.display = state.view === 'visual' ? 'block' : 'none';
+    
+    // CORRECCIÓN CLAVE: Forzar el redimensionamiento justo después de hacerlo visible
+    // para que getBoundingClientRect obtenga las medidas reales y no 0.
+    setTimeout(resizeCanvas, 10);
+  });
+});
+
+// Toggle Corriente
+document.getElementById('showCurrentToggle').addEventListener('click', function() {
+  state.showCurrent = !state.showCurrent;
+  this.classList.toggle('active', state.showCurrent);
+});
+
+// Sliders
+const sliders = {
+  voltage: { key: 'voltage', fmt: v => v + ' V', display: 'vVal' },
+  frequency: { key: 'frequency', fmt: v => parseFloat(v).toFixed(1) + ' Hz', display: 'fVal' },
+  current: { key: 'current', fmt: v => parseFloat(v).toFixed(1) + ' A', display: 'iVal' },
+  pf: { key: 'pf', fmt: v => parseFloat(v).toFixed(2), display: 'pfVal' },
+  thd: { key: 'thd', fmt: v => parseFloat(v).toFixed(1) + ' %', display: 'thdVal' }
+};
+
+Object.keys(sliders).forEach(id => {
+  const el = document.getElementById(id);
+  const cfg = sliders[id];
+  el.addEventListener('input', e => {
+    state[cfg.key] = parseFloat(e.target.value);
+    document.getElementById(cfg.display).textContent = cfg.fmt(e.target.value);
+    updateMetrics();
+    evaluateStatus();
+  });
+});
+
+function updateAll() {
+  document.getElementById('vVal').textContent = state.voltage + ' V';
+  document.getElementById('fVal').textContent = state.frequency.toFixed(1) + ' Hz';
+  document.getElementById('iVal').textContent = state.current.toFixed(1) + ' A';
+  document.getElementById('pfVal').textContent = state.pf.toFixed(2);
+  document.getElementById('thdVal').textContent = state.thd.toFixed(1) + ' %';
+  updateMetrics();
+  evaluateStatus();
+  updateVisualGuide();
+}
+
+// Inicializar
+resizeCanvas();
+updateAll();
+animate();
+</script>
+</body>
+</html>
