@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Virtual de Calidad de Energía - Con Informes</title>
+    
+    <!-- EmailJS para envío de correos -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #00ffff;
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .header p { color: #b0b0b0; font-size: 1em; }
+        
+        .section {
+            background: rgba(20, 30, 48, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .section h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        /* Botones de eventos */
+        .event-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .event-btn {
+            padding: 12px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .event-btn:hover {
+            background: rgba(0, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .event-btn.active {
+            background: linear-gradient(135deg, #00ffff, #0099cc);
+            color: #000;
+            border-color: #00ffff;
+        }
+        
+        /* Parámetros */
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .param-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .param-item label {
+            display: block;
+            color: #00ffff;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+        
+        .param-item input {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 1em;
+        }
+        
+        .param-item span.value {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        /* Canvas */
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        /* Resultados */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 150, 200, 0.1));
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+        
+        .result-card .label {
+            color: #b0b0b0;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+        
+        .result-card .value {
+            color: #00ffff;
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .status-ok { background: rgba(0, 255, 100, 0.2); color: #00ff88; border: 1px solid #00ff88; }
+        .status-warning { background: rgba(255, 200, 0, 0.2); color: #ffcc00; border: 1px solid #ffcc00; }
+        .status-error { background: rgba(255, 50, 50, 0.2); color: #ff5555; border: 1px solid #ff5555; }
+        
+        /* HOJA DE CÁLCULO */
+        .spreadsheet-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .spreadsheet-container table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.4);
+            min-width: 900px;
+        }
+        
+        .spreadsheet-container th {
+            background: linear-gradient(135deg, #0099cc, #006699);
+            color: #fff;
+            padding: 10px;
+            font-size: 0.85em;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .spreadsheet-container td {
+            padding: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            text-align: center;
+            font-size: 0.85em;
+            color: #e0e0e0;
+        }
+        
+        .spreadsheet-container tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .spreadsheet-container tr:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        /* Botones de acción */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary { background: linear-gradient(135deg, #00ffff, #0099cc); color: #000; }
+        .btn-success { background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; }
+        .btn-danger { background: linear-gradient(135deg, #ff5555, #cc0000); color: #fff; }
+        .btn-warning { background: linear-gradient(135deg, #ffcc00, #ff9900); color: #000; }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        /* Formulario de correo */
+        .email-form {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #00ffff;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.95em;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        /* Mensajes de estado */
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+        }
+        
+        .status-message.show { display: block; }
+        
+        .status-message.success {
+            background: rgba(0, 255, 100, 0.15);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        .status-message.error {
+            background: rgba(255, 50, 50, 0.15);
+            color: #ff5555;
+            border: 1px solid #ff5555;
+        }
+        
+        .status-message.warning {
+            background: rgba(255, 200, 0, 0.15);
+            color: #ffcc00;
+            border: 1px solid #ffcc00;
+        }
+        
+        .status-message h3 {
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .status-message ul {
+            margin-left: 20px;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+        
+        .status-message li {
+            margin-bottom: 5px;
+        }
+        
+        /* Configuración EmailJS */
+        .config-box {
+            background: rgba(255, 200, 0, 0.1);
+            border: 1px solid rgba(255, 200, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .config-box h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .config-input {
+            margin-bottom: 10px;
+        }
+        
+        .config-input label {
+            display: block;
+            color: #ffcc00;
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        
+        .config-input input {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 200, 0, 0.4);
+            border-radius: 4px;
+            color: #fff;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ENCABEZADO -->
+        <div class="header">
+            <h1>🔌 Laboratorio Virtual de Calidad de Energía</h1>
+            <p>Explora tensiones, corrientes, armónicos y eventos con visualización fasorial en tiempo real + Generación de Informes</p>
+        </div>
+        
+        <!-- EVENTOS A SIMULAR -->
+        <div class="section">
+            <h2>⚡ Evento a Simular</h2>
+            <div class="event-buttons">
+                <button class="event-btn active" data-event="normal" onclick="setEvent('normal')">✅ Normal</button>
+                <button class="event-btn" data-event="sag" onclick="setEvent('sag')">📉 Hueco</button>
+                <button class="event-btn" data-event="swell" onclick="setEvent('swell')">📈 Subida</button>
+                <button class="event-btn" data-event="interruption" onclick="setEvent('interruption')">⛔ Interrup.</button>
+                <button class="event-btn" data-event="harmonics" onclick="setEvent('harmonics')">🌊 Armónicos</button>
+                <button class="event-btn" data-event="flicker" onclick="setEvent('flicker')">💡 Flicker</button>
+            </div>
+        </div>
+        
+        <!-- PARÁMETROS -->
+        <div class="section">
+            <h2>🎛️ Parámetros de la Señal</h2>
+            <div class="params-grid">
+                <div class="param-item">
+                    <label>Tensión (Vrms)</label>
+                    <input type="number" id="voltage" value="230" step="1">
+                </div>
+                <div class="param-item">
+                    <label>Frecuencia (Hz)</label>
+                    <input type="number" id="frequency" value="50" step="0.1">
+                </div>
+                <div class="param-item">
+                    <label>Corriente (Arms)</label>
+                    <input type="number" id="current" value="10" step="0.1">
+                </div>
+                <div class="param-item">
+                    <label>Factor de Potencia (cos φ)</label>
+                    <input type="number" id="powerFactor" value="0.95" step="0.01" min="0" max="1">
+                </div>
+                <div class="param-item">
+                    <label>THD - Distorsión (%)</label>
+                    <input type="number" id="thd" value="2" step="0.1">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="runSimulation()">▶️ Ejecutar Simulación</button>
+            <button class="btn btn-success" onclick="recordMeasurement()">📝 Registrar en Hoja de Cálculo</button>
+        </div>
+        
+        <!-- VISUALIZACIÓN -->
+        <div class="section">
+            <h2>📈 Visualización de Onda</h2>
+            <div class="canvas-container">
+                <canvas id="waveCanvas"></canvas>
+            </div>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="label">Potencia Activa (P)</div>
+                    <div class="value" id="pValue">0.00 kW</div>
+                </div>
+                <div class="result-card">
+                    <div class="label">Potencia Reactiva (Q)</div>
+                    <div class="value" id="qValue">0.00 kVAr</div>
+                </div>
+                <div class="result-card">
+                    <div class="label">Potencia Aparente (S)</div>
+                    <div class="value" id="sValue">0.00 kVA</div>
+                </div>
+                <div class="result-card">
+                    <div class="label">Desviación Frec.</div>
+                    <div class="value" id="freqDev">0.0 %</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <span class="status-badge status-ok" id="statusBadge">✅ Señal dentro de límites normativos</span>
+            </div>
+        </div>
+        
+        <!-- HOJA DE CÁLCULO -->
+        <div class="section">
+            <h2>📊 Hoja de Cálculo de Mediciones</h2>
+            <p style="color: #b0b0b0; margin-bottom: 15px; font-size: 0.9em;">
+                Cada simulación registrada se añade automáticamente a la hoja. Puedes editar las celdas manualmente si lo necesitas.
+            </p>
+            
+            <div class="action-buttons" style="margin-bottom: 15px;">
+                <button class="btn btn-primary" onclick="addManualRow()">➕ Fila Manual</button>
+                <button class="btn btn-danger" onclick="deleteLastRow()">🗑️ Eliminar Última</button>
+                <button class="btn btn-warning" onclick="clearSpreadsheet()">🧹 Limpiar Todo</button>
+                <button class="btn btn-success" onclick="exportToCSV()">💾 Exportar CSV</button>
+            </div>
+            
+            <div class="spreadsheet-container">
+                <table id="spreadsheet">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha/Hora</th>
+                            <th>Evento</th>
+                            <th>V (Vrms)</th>
+                            <th>F (Hz)</th>
+                            <th>I (A)</th>
+                            <th>cos φ</th>
+                            <th>THD (%)</th>
+                            <th>P (kW)</th>
+                            <th>Q (kVAr)</th>
+                            <th>S (kVA)</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spreadsheetBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="empty-state">
+                No hay mediciones registradas. Ejecuta una simulación y pulsa "Registrar en Hoja de Cálculo".
+            </div>
+        </div>
+        
+        <!-- ENVÍO DE INFORMES -->
+        <div class="section">
+            <h2>📧 Enviar Informe por Correo</h2>
+            
+            <!-- Configuración EmailJS -->
+            <div class="config-box">
+                <h3>⚙️ Configuración de EmailJS (solo primera vez)</h3>
+                <p style="font-size: 0.85em; color: #ffcc00; margin-bottom: 10px;">
+                    Para enviar correos necesitas configurar EmailJS. Visita <a href="https://www.emailjs.com/" target="_blank" style="color: #00ffff;">emailjs.com</a>, crea una cuenta gratuita y completa los campos:
+                </p>
+                <div class="config-input">
+                    <label>Public Key:</label>
+                    <input type="text" id="emailjsPublicKey" placeholder="Tu Public Key de EmailJS">
+                </div>
+                <div class="config-input">
+                    <label>Service ID:</label>
+                    <input type="text" id="emailjsServiceId" placeholder="Ej: service_abc123">
+                </div>
+                <div class="config-input">
+                    <label>Template ID:</label>
+                    <input type="text" id="emailjsTemplateId" placeholder="Ej: template_xyz789">
+                </div>
+                <button class="btn btn-warning" onclick="saveEmailJSConfig()" style="margin-top: 10px;">💾 Guardar Configuración</button>
+            </div>
+            
+            <!-- Formulario de envío -->
+            <div class="email-form">
+                <div class="form-group">
+                    <label>Correo del Destinatario:</label>
+                    <input type="email" id="toEmail" placeholder="ejemplo@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Remitente:</label>
+                    <input type="text" id="fromName" placeholder="Tu nombre o laboratorio">
+                </div>
+                <div class="form-group">
+                    <label>Asunto del Informe:</label>
+                    <input type="text" id="subject" value="Informe de Calidad de Energía" required>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje Adicional:</label>
+                    <textarea id="message" placeholder="Comentarios sobre el informe..."></textarea>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="sendEmailReport()">📤 Enviar Informe Completo</button>
+                    <button class="btn btn-primary" onclick="sendEmailCSV()">📎 Enviar con CSV Adjunto (como texto)</button>
+                    <button class="btn btn-warning" onclick="testEmailJS()">🧪 Probar Conexión</button>
+                </div>
+                
+                <div id="emailStatus" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let currentEvent = 'normal';
+        let measurements = [];
+        let animationId = null;
+        let emailjsConfigured = false;
+        
+        // ============================================
+        // CONFIGURACIÓN EMAILJS (persistente en localStorage)
+        // ============================================
+        function loadEmailJSConfig() {
+            const pubKey = localStorage.getItem('emailjs_public_key') || '';
+            const servId = localStorage.getItem('emailjs_service_id') || '';
+            const tempId = localStorage.getItem('emailjs_template_id') || '';
+            
+            document.getElementById('emailjsPublicKey').value = pubKey;
+            document.getElementById('emailjsServiceId').value = servId;
+            document.getElementById('emailjsTemplateId').value = tempId;
+            
+            if (pubKey && servId && tempId) {
+                try {
+                    emailjs.init(pubKey);
+                    emailjsConfigured = true;
+                    showStatus('success', '✅ Configuración de EmailJS cargada correctamente.');
+                } catch (e) {
+                    console.error('Error al inicializar EmailJS:', e);
+                }
+            }
+        }
+        
+        function saveEmailJSConfig() {
+            const pubKey = document.getElementById('emailjsPublicKey').value.trim();
+            const servId = document.getElementById('emailjsServiceId').value.trim();
+            const tempId = document.getElementById('emailjsTemplateId').value.trim();
+            
+            if (!pubKey || !servId || !tempId) {
+                showStatus('error', '❌ Debes completar los tres campos de configuración.');
+                return;
+            }
+            
+            localStorage.setItem('emailjs_public_key', pubKey);
+            localStorage.setItem('emailjs_service_id', servId);
+            localStorage.setItem('emailjs_template_id', tempId);
+            
+            try {
+                emailjs.init(pubKey);
+                emailjsConfigured = true;
+                showStatus('success', '✅ Configuración guardada. EmailJS inicializado correctamente.');
+            } catch (e) {
+                showStatus('error', '❌ Error al inicializar EmailJS: ' + e.message);
+            }
+        }
+        
+        // ============================================
+        // SIMULACIÓN DE EVENTOS
+        // ============================================
+        function setEvent(event) {
+            currentEvent = event;
+            document.querySelectorAll('.event-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.event === event);
+            });
+            
+            // Ajustar parámetros según el evento
+            const params = {
+                normal: { voltage: 230, frequency: 50, thd: 2 },
+                sag: { voltage: 180, frequency: 50, thd: 3 },
+                swell: { voltage: 260, frequency: 50, thd: 3 },
+                interruption: { voltage: 0, frequency: 50, thd: 0 },
+                harmonics: { voltage: 230, frequency: 50, thd: 15 },
+                flicker: { voltage: 230, frequency: 50, thd: 5 }
+            };
+            
+            const p = params[event];
+            document.getElementById('voltage').value = p.voltage;
+            document.getElementById('frequency').value = p.frequency;
+            document.getElementById('thd').value = p.thd;
+            
+            updateResults();
+            drawWave();
+        }
+        
+        function runSimulation() {
+            updateResults();
+            drawWave();
+            showStatus('success', '✅ Simulación ejecutada. Puedes registrarla en la hoja de cálculo.');
+        }
+        
+        function updateResults() {
+            const V = parseFloat(document.getElementById('voltage').value) || 0;
+            const I = parseFloat(document.getElementById('current').value) || 0;
+            const cosPhi = parseFloat(document.getElementById('powerFactor').value) || 0;
+            const freq = parseFloat(document.getElementById('frequency').value) || 50;
+            
+            const S = V * I / 1000;
+            const P = S * cosPhi;
+            const Q = S * Math.sin(Math.acos(cosPhi));
+            const freqDev = ((freq - 50) / 50) * 100;
+            
+            document.getElementById('pValue').textContent = P.toFixed(2) + ' kW';
+            document.getElementById('qValue').textContent = Q.toFixed(2) + ' kVAr';
+            document.getElementById('sValue').textContent = S.toFixed(2) + ' kVA';
+            document.getElementById('freqDev').textContent = freqDev.toFixed(1) + ' %';
+            
+            // Actualizar badge de estado
+            const badge = document.getElementById('statusBadge');
+            const thd = parseFloat(document.getElementById('thd').value) || 0;
+            
+            if (V === 0) {
+                badge.className = 'status-badge status-error';
+                badge.textContent = '⛔ Interrupción detectada';
+            } else if (V < 207 || V > 253 || thd > 8) {
+                badge.className = 'status-badge status-error';
+                badge.textContent = '⚠️ Fuera de límites normativos (EN 50160)';
+            } else if (V < 218 || V > 242 || thd > 5) {
+                badge.className = 'status-badge status-warning';
+                badge.textContent = '⚠️ Cerca del límite normativo';
+            } else {
+                badge.className = 'status-badge status-ok';
+                badge.textContent = '✅ Señal dentro de límites normativos';
+            }
+        }
+        
+        // ============================================
+        // DIBUJO DE ONDA
+        // ============================================
+        function drawWave() {
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const V = parseFloat(document.getElementById('voltage').value) || 0;
+            const freq = parseFloat(document.getElementById('frequency').value) || 50;
+            const thd = parseFloat(document.getElementById('thd').value) || 0;
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Cuadrícula
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Línea central
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Onda
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            const amplitude = (V / 300) * (canvas.height / 2 - 20);
+            const cycles = 3;
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const t = (x / canvas.width) * cycles * 2 * Math.PI;
+                let y = Math.sin(t);
+                
+                // Añadir armónicos
+                if (thd > 0) {
+                    const harm = thd / 100;
+                    y += harm * 0.5 * Math.sin(3 * t);
+                    y += harm * 0.3 * Math.sin(5 * t);
+                    y += harm * 0.2 * Math.sin(7 * t);
+                }
+                
+                // Flicker
+                if (currentEvent === 'flicker') {
+                    y *= (1 + 0.2 * Math.sin(0.1 * t));
+                }
+                
+                // Interrupción
+                if (currentEvent === 'interruption') {
+                    y = 0;
+                }
+                
+                const yPos = canvas.height / 2 - y * amplitude;
+                
+                if (x === 0) ctx.moveTo(x, yPos);
+                else ctx.lineTo(x, yPos);
+            }
+            ctx.stroke();
+            
+            // Etiquetas
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '12px monospace';
+            ctx.fillText(`V: ${V} V | F: ${freq} Hz | THD: ${thd}%`, 10, 20);
+        }
+        
+        // ============================================
+        // HOJA DE CÁLCULO
+        // ============================================
+        function recordMeasurement() {
+            const V = parseFloat(document.getElementById('voltage').value) || 0;
+            const I = parseFloat(document.getElementById('current').value) || 0;
+            const cosPhi = parseFloat(document.getElementById('powerFactor').value) || 0;
+            const freq = parseFloat(document.getElementById('frequency').value) || 50;
+            const thd = parseFloat(document.getElementById('thd').value) || 0;
+            
+            const S = V * I / 1000;
+            const P = S * cosPhi;
+            const Q = S * Math.sin(Math.acos(cosPhi));
+            
+            // Determinar estado
+            let status = 'OK';
+            if (V === 0) status = 'INTERRUPCIÓN';
+            else if (V < 207 || V > 253 || thd > 8) status = 'FUERA LÍMITE';
+            else if (V < 218 || V > 242 || thd > 5) status = 'ADVERTENCIA';
+            
+            const eventNames = {
+                normal: 'Normal',
+                sag: 'Hueco',
+                swell: 'Subida',
+                interruption: 'Interrupción',
+                harmonics: 'Armónicos',
+                flicker: 'Flicker'
+            };
+            
+            const now = new Date();
+            const timestamp = now.toLocaleString('es-ES');
+            
+            const measurement = {
+                timestamp,
+                event: eventNames[currentEvent],
+                voltage: V,
+                frequency: freq,
+                current: I,
+                powerFactor: cosPhi,
+                thd,
+                P: P.toFixed(2),
+                Q: Q.toFixed(2),
+                S: S.toFixed(2),
+                status
+            };
+            
+            measurements.push(measurement);
+            updateSpreadsheet();
+            
+            showStatus('success', `✅ Medición #${measurements.length} registrada en la hoja de cálculo.`);
+        }
+        
+        function updateSpreadsheet() {
+            const tbody = document.getElementById('spreadsheetBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            tbody.innerHTML = '';
+            
+            if (measurements.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            measurements.forEach((m, i) => {
+                const row = document.createElement('tr');
+                const statusClass = m.status === 'OK' ? 'status-ok' : 
+                                   m.status === 'ADVERTENCIA' ? 'status-warning' : 'status-error';
+                
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td contenteditable="true">${m.timestamp}</td>
+                    <td contenteditable="true">${m.event}</td>
+                    <td contenteditable="true">${m.voltage}</td>
+                    <td contenteditable="true">${m.frequency}</td>
+                    <td contenteditable="true">${m.current}</td>
+                    <td contenteditable="true">${m.powerFactor}</td>
+                    <td contenteditable="true">${m.thd}</td>
+                    <td contenteditable="true">${m.P}</td>
+                    <td contenteditable="true">${m.Q}</td>
+                    <td contenteditable="true">${m.S}</td>
+                    <td class="${statusClass}">${m.status}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function addManualRow() {
+            measurements.push({
+                timestamp: new Date().toLocaleString('es-ES'),
+                event: 'Manual',
+                voltage: 0,
+                frequency: 50,
+                current: 0,
+                powerFactor: 1,
+                thd: 0,
+                P: '0.00',
+                Q: '0.00',
+                S: '0.00',
+                status: 'OK'
+            });
+            updateSpreadsheet();
+        }
+        
+        function deleteLastRow() {
+            if (measurements.length === 0) {
+                showStatus('warning', '⚠️ No hay mediciones para eliminar.');
+                return;
+            }
+            measurements.pop();
+            updateSpreadsheet();
+        }
+        
+        function clearSpreadsheet() {
+            if (measurements.length === 0) return;
+            if (confirm('¿Seguro que deseas borrar todas las mediciones?')) {
+                measurements = [];
+                updateSpreadsheet();
+                showStatus('warning', '🧹 Hoja de cálculo limpiada.');
+            }
+        }
+        
+        function exportToCSV() {
+            if (measurements.length === 0) {
+                showStatus('warning', '⚠️ No hay datos para exportar.');
+                return;
+            }
+            
+            // Leer datos actualizados de la tabla (por si se editaron)
+            const table = document.getElementById('spreadsheet');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            let csv = 'Nº,Fecha/Hora,Evento,V (Vrms),F (Hz),I (A),cos φ,THD (%),P (kW),Q (kVAr),S (kVA),Estado\n';
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [];
+                cells.forEach(cell => {
+                    let val = cell.textContent.trim().replace(/,/g, '.').replace(/"/g, '""');
+                    rowData.push(`"${val}"`);
+                });
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `informe_calidad_energia_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatus('success', '💾 CSV exportado correctamente.');
+        }
+        
+        // ============================================
+        // ENVÍO DE CORREOS
+        // ============================================
+        function validateEmailForm() {
+            const toEmail = document.getElementById('toEmail').value.trim();
+            const fromName = document.getElementById('fromName').value.trim() || 'Laboratorio Virtual';
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (!emailjsConfigured) {
+                showStatus('error', 
+                    '❌ <strong>EmailJS no está configurado.</strong>' +
+                    '<ul><li>Ve a la sección "Configuración de EmailJS" más arriba.</li>' +
+                    '<li>Regístrate gratis en <a href="https://www.emailjs.com/" target="_blank" style="color:#00ffff;">emailjs.com</a></li>' +
+                    '<li>Crea un servicio (Gmail, Outlook, etc.) y una plantilla.</li>' +
+                    '<li>Completa los campos Public Key, Service ID y Template ID.</li>' +
+                    '<li>Pulsa "Guardar Configuración".</li></ul>'
+                );
+                return null;
+            }
+            
+            if (!toEmail) {
+                showStatus('error', '❌ Debes ingresar el correo del destinatario.');
+                return null;
+            }
+            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+                showStatus('error', '❌ El correo del destinatario no es válido.');
+                return null;
+            }
+            
+            if (!subject) {
+                showStatus('error', '❌ Debes ingresar un asunto para el informe.');
+                return null;
+            }
+            
+            return { toEmail, fromName, subject, message };
+        }
+        
+        function buildReportText() {
+            let report = '═══════════════════════════════════════\n';
+            report += '  INFORME DE CALIDAD DE ENERGÍA\n';
+            report += '  Laboratorio Virtual\n';
+            report += '  Fecha: ' + new Date().toLocaleString('es-ES') + '\n';
+            report += '═══════════════════════════════════════\n\n';
+            
+            if (measurements.length === 0) {
+                report += 'No hay mediciones registradas.\n';
+                return report;
+            }
+            
+            report += `Total de mediciones: ${measurements.length}\n\n`;
+            
+            // Resumen estadístico
+            const voltages = measurements.map(m => m.voltage).filter(v => v > 0);
+            if (voltages.length > 0) {
+                const avgV = voltages.reduce((a, b) => a + b, 0) / voltages.length;
+                const minV = Math.min(...voltages);
+                const maxV = Math.max(...voltages);
+                report += `Tensión - Promedio: ${avgV.toFixed(1)} V | Mín: ${minV} V | Máx: ${maxV} V\n`;
+            }
+            
+            const okCount = measurements.filter(m => m.status === 'OK').length;
+            const warnCount = measurements.filter(m => m.status === 'ADVERTENCIA').length;
+            const errCount = measurements.filter(m => m.status !== 'OK' && m.status !== 'ADVERTENCIA').length;
+            
+            report += `\nEstado de mediciones:\n`;
+            report += `  ✅ OK: ${okCount}\n`;
+            report += `  ⚠️ Advertencias: ${warnCount}\n`;
+            report += `  ❌ Fuera de límite: ${errCount}\n\n`;
+            
+            report += '───────────────────────────────────────\n';
+            report += 'DETALLE DE MEDICIONES:\n';
+            report += '───────────────────────────────────────\n\n';
+            
+            measurements.forEach((m, i) => {
+                report += `Medición #${i + 1} - ${m.timestamp}\n`;
+                report += `  Evento: ${m.event}\n`;
+                report += `  Tensión: ${m.voltage} V | Frecuencia: ${m.frequency} Hz\n`;
+                report += `  Corriente: ${m.current} A | cos φ: ${m.powerFactor}\n`;
+                report += `  THD: ${m.thd}%\n`;
+                report += `  P: ${m.P} kW | Q: ${m.Q} kVAr | S: ${m.S} kVA\n`;
+                report += `  Estado: ${m.status}\n\n`;
+            });
+            
+            report += '═══════════════════════════════════════\n';
+            report += 'Fin del informe\n';
+            report += '═══════════════════════════════════════\n';
+            
+            return report;
+        }
+        
+        function buildCSVText() {
+            let csv = 'Nº,Fecha/Hora,Evento,V (Vrms),F (Hz),I (A),cos φ,THD (%),P (kW),Q (kVAr),S (kVA),Estado\n';
+            const table = document.getElementById('spreadsheet');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [];
+                cells.forEach(cell => {
+                    let val = cell.textContent.trim().replace(/"/g, '""');
+                    rowData.push(`"${val}"`);
+                });
+                csv += rowData.join(',') + '\n';
+            });
+            return csv;
+        }
+        
+        async function sendEmailReport() {
+            const formData = validateEmailForm();
+            if (!formData) return;
+            
+            if (measurements.length === 0) {
+                showStatus('warning', '⚠️ No hay mediciones registradas. Registra al menos una antes de enviar el informe.');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.className = 'status-message show warning';
+            statusDiv.innerHTML = '⏳ Enviando informe...';
+            
+            const reportText = buildReportText();
+            
+            const templateParams = {
+                to_email: formData.toEmail,
+                from_name: formData.fromName,
+                subject: formData.subject,
+                message: formData.message || 'Se adjunta el informe de calidad de energía.',
+                report_content: reportText,
+                total_measurements: measurements.length,
+                send_date: new Date().toLocaleString('es-ES')
+            };
+            
+            try {
+                const serviceId = localStorage.getItem('emailjs_service_id');
+                const templateId = localStorage.getItem('emailjs_template_id');
+                
+                const response = await emailjs.send(serviceId, templateId, templateParams);
+                
+                statusDiv.className = 'status-message show success';
+                statusDiv.innerHTML = `
+                    <h3>✅ ¡Informe enviado exitosamente!</h3>
+                    <p>El informe con ${measurements.length} mediciones fue enviado a <strong>${formData.toEmail}</strong>.</p>
+                    <p><small>ID de respuesta: ${response.text || response.status || 'OK'}</small></p>
+                `;
+            } catch (error) {
+                console.error('Error completo:', error);
+                showEmailError(error);
+            }
+        }
+        
+        async function sendEmailCSV() {
+            const formData = validateEmailForm();
+            if (!formData) return;
+            
+            if (measurements.length === 0) {
+                showStatus('warning', '⚠️ No hay mediciones para enviar.');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.className = 'status-message show warning';
+            statusDiv.innerHTML = '⏳ Enviando datos CSV...';
+            
+            const csvText = buildCSVText();
+            
+            const templateParams = {
+                to_email: formData.toEmail,
+                from_name: formData.fromName,
+                subject: formData.subject + ' (Datos CSV)',
+                message: formData.message || 'Se adjuntan los datos en formato CSV.',
+                report_content: csvText,
+                total_measurements: measurements.length,
+                send_date: new Date().toLocaleString('es-ES')
+            };
+            
+            try {
+                const serviceId = localStorage.getItem('emailjs_service_id');
+                const templateId = localStorage.getItem('emailjs_template_id');
+                
+                await emailjs.send(serviceId, templateId, templateParams);
+                
+                statusDiv.className = 'status-message show success';
+                statusDiv.innerHTML = `
+                    <h3>✅ ¡Datos CSV enviados!</h3>
+                    <p>Los datos de ${measurements.length} mediciones fueron enviados a <strong>${formData.toEmail}</strong>.</p>
+                `;
+            } catch (error) {
+                console.error('Error completo:', error);
+                showEmailError(error);
+            }
+        }
+        
+        async function testEmailJS() {
+            const toEmail = document.getElementById('toEmail').value.trim();
+            
+            if (!emailjsConfigured) {
+                showStatus('error', '❌ Configura EmailJS primero (ver sección superior).');
+                return;
+            }
+            
+            if (!toEmail) {
+                showStatus('warning', '⚠️ Ingresa un correo de prueba para verificar la conexión.');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.className = 'status-message show warning';
+            statusDiv.innerHTML = '⏳ Probando conexión...';
+            
+            try {
+                const serviceId = localStorage.getItem('emailjs_service_id');
+                const templateId = localStorage.getItem('emailjs_template_id');
+                
+                await emailjs.send(serviceId, templateId, {
+                    to_email: toEmail,
+                    from_name: 'Test Laboratorio',
+                    subject: 'Prueba de conexión - Laboratorio de Energía',
+                    message: 'Este es un correo de prueba. Si lo recibes, la configuración es correcta.',
+                    report_content: 'PRUEBA DE CONEXIÓN EXITOSA',
+                    total_measurements: 0,
+                    send_date: new Date().toLocaleString('es-ES')
+                });
+                
+                statusDiv.className = 'status-message show success';
+                statusDiv.innerHTML = `
+                    <h3>✅ ¡Conexión exitosa!</h3>
+                    <p>Revisa tu bandeja de entrada en <strong>${toEmail}</strong>. Si no lo ves, revisa la carpeta de spam.</p>
+                `;
+            } catch (error) {
+                console.error('Error completo:', error);
+                showEmailError(error);
+            }
+        }
+        
+        // ============================================
+        // MANEJO DE ERRORES DETALLADO
+        // ============================================
+        function showEmailError(error) {
+            const statusDiv = document.getElementById('emailStatus');
+            let errorMsg = '';
+            let solution = '';
+            
+            const errorText = (error.text || error.message || String(error)).toLowerCase();
+            const errorCode = error.status || error.code || '';
+            
+            if (errorText.includes('user') || errorText.includes('public') || errorText.includes('401') || errorCode === 401) {
+                errorMsg = '❌ <strong>Error de autenticación (Public Key inválida)</strong>';
+                solution = `
+                    <ul>
+                        <li>Verifica que el <strong>Public Key</strong> sea correcto.</li>
+                        <li>Ve a EmailJS → Account → API Keys y copia la clave pública.</li>
+                        <li>Asegúrate de que tu cuenta esté activa (revisa tu correo de verificación).</li>
+                        <li>Pega la clave en el campo "Public Key" y guarda.</li>
+                    </ul>
+                `;
+            } else if (errorText.includes('service') || errorText.includes('404') || errorCode === 404) {
+                errorMsg = '❌ <strong>Servicio o plantilla no encontrada</strong>';
+                solution = `
+                    <ul>
+                        <li>Verifica el <strong>Service ID</strong> y <strong>Template ID</strong>.</li>
+                        <li>En EmailJS → Email Services: copia el ID exacto del servicio (Gmail, Outlook, etc.).</li>
+                        <li>En EmailJS → Email Templates: copia el ID exacto de la plantilla.</li>
+                        <li>Asegúrate de que el servicio esté conectado (autorizado) con tu cuenta de correo.</li>
+                    </ul>
+                `;
+            } else if (errorText.includes('template') || errorText.includes('missing')) {
+                errorMsg = '❌ <strong>Variables de plantilla faltantes</strong>';
+                solution = `
+                    <ul>
+                        <li>Tu plantilla en EmailJS debe incluir estas variables: <code>{{to_email}}</code>, <code>{{from_name}}</code>, <code>{{subject}}</code>, <code>{{message}}</code>, <code>{{report_content}}</code>.</li>
+                        <li>Ve a EmailJS → Email Templates → edita tu plantilla.</li>
+                        <li>Asegúrate de que el "To Email" sea <code>{{to_email}}</code>.</li>
+                        <li>El cuerpo debe incluir <code>{{report_content}}</code> para mostrar el informe.</li>
+                    </ul>
+                `;
+            } else if (errorText.includes('limit') || errorText.includes('429') || errorCode === 429) {
+                errorMsg = '❌ <strong>Límite de envíos excedido</strong>';
+                solution = `
+                    <ul>
+                        <li>El plan gratuito de EmailJS permite 200 correos/mes.</li>
+                        <li>Espera al próximo ciclo o actualiza a un plan de pago.</li>
+                        <li>Revisa tu uso en EmailJS → Billing.</li>
+                    </ul>
+                `;
+            } else if (errorText.includes('network') || errorText.includes('failed to fetch') || errorText.includes('offline')) {
+                errorMsg = '❌ <strong>Error de conexión a Internet</strong>';
+                solution = `
+                    <ul>
+                        <li>Verifica tu conexión a Internet.</li>
+                        <li>EmailJS necesita conexión para enviar los correos.</li>
+                        <li>Si usas un firewall o proxy, puede estar bloqueando las peticiones.</li>
+                    </ul>
+                `;
+            } else if (errorText.includes('cors')) {
+                errorMsg = '❌ <strong>Error de CORS</strong>';
+                solution = `
+                    <ul>
+                        <li>Asegúrate de abrir el archivo HTML desde un servidor (no con file://).</li>
+                        <li>Usa Live Server en VS Code o sube el archivo a un hosting.</li>
+                        <li>En EmailJS → Account, verifica que tu dominio esté autorizado.</li>
+                    </ul>
+                `;
+            } else {
+                errorMsg = `❌ <strong>Error desconocido</strong>`;
+                solution = `
+                    <ul>
+                        <li>Código de error: ${errorCode || 'N/A'}</li>
+                        <li>Detalle: ${error.text || error.message || 'Sin detalle'}</li>
+                        <li>Verifica la consola del navegador (F12) para más información.</li>
+                        <li>Revisa la documentación de EmailJS: <a href="https://www.emailjs.com/docs/" target="_blank" style="color:#00ffff;">emailjs.com/docs</a></li>
+                    </ul>
+                `;
+            }
+            
+            statusDiv.className = 'status-message show error';
+            statusDiv.innerHTML = `
+                <h3>${errorMsg}</h3>
+                <p><strong>🔧 Cómo solucionarlo:</strong></p>
+                ${solution}
+            `;
+        }
+        
+        // ============================================
+        // MENSAJES DE ESTADO GENERALES
+        // ============================================
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.className = `status-message show ${type}`;
+            statusDiv.innerHTML = message;
+            
+            if (type === 'success' || type === 'warning') {
+                setTimeout(() => {
+                    statusDiv.classList.remove('show');
+                }, 5000);
+            }
+        }
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        window.addEventListener('load', () => {
+            loadEmailJSConfig();
+            setEvent('normal');
+            
+            // Actualizar resultados cuando cambien los inputs
+            document.querySelectorAll('.param-item input').forEach(input => {
+                input.addEventListener('input', () => {
+                    updateResults();
+                    drawWave();
+                });
+            });
+            
+            // Redibujar al cambiar tamaño
+            window.addEventListener('resize', drawWave);
+        });
+    </script>
+</body>
+</html>
